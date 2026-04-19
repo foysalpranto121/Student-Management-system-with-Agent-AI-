@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Student Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed; top: 0; left: 0; height: 100vh; width: 260px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            color: white; padding-top: 20px; z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+        }
+        .sidebar h4 {
+            padding: 20px;
+            text-align: center;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+        }
+        .sidebar a {
+            display: block; padding: 15px 25px; color: white;
+            text-decoration: none; transition: all 0.3s ease;
+            margin: 5px 15px; border-radius: 12px;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(10px);
+        }
+        .sidebar a i { margin-right: 12px; font-size: 1.1rem; }
+        .main-content { margin-left: 260px; padding: 30px; }
+        .topnav {
+            background: white; padding: 20px 30px; border-radius: 20px;
+            margin-bottom: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .stat-card {
+            background: white; border-radius: 20px; padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease; position: relative; overflow: hidden;
+            border: none;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 5px; height: 100%;
+        }
+        .stat-card:hover {
+            transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .stat-card.primary::before { background: linear-gradient(180deg, #667eea, #764ba2); }
+        .stat-card.success::before { background: linear-gradient(180deg, #11998e, #38ef7d); }
+        .stat-card.info::before { background: linear-gradient(180deg, #4facfe, #00f2fe); }
+        .stat-card.warning::before { background: linear-gradient(180deg, #f093fb, #f5576c); }
+        .stat-icon {
+            width: 70px; height: 70px; border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; margin-bottom: 20px;
+        }
+        .stat-card.primary .stat-icon { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .stat-card.success .stat-icon { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
+        .stat-card.info .stat-icon { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+        .stat-card.warning .stat-icon { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .stat-value { font-size: 2.5rem; font-weight: 700; color: #2d3748; }
+        .stat-label { color: #718096; font-size: 1rem; font-weight: 500; }
+        .chart-container {
+            background: white; border-radius: 20px; padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 1.5rem; font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 25px;
+        }
+        .recent-students {
+            background: white; border-radius: 20px; padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .table th { color: #667eea; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+        .table td { vertical-align: middle; padding: 15px; }
+        .avatar-circle {
+            width: 45px; height: 45px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 1.1rem;
+        }
+        .btn-action {
+            border-radius: 12px; padding: 12px 20px; font-weight: 600;
+            transition: all 0.3s ease; border: none;
+        }
+        .btn-action:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+        .btn-add { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .btn-grades { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
+        .btn-attendance { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+        .btn-reports { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .main-content { margin-left: 0; } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h4><i class="bi bi-mortarboard-fill me-2"></i>SMS Pro</h4>
+        <a href="{{ url_for('dashboard') }}" class="active"><i class="bi bi-speedometer2"></i>Dashboard</a>
+        <a href="{{ url_for('students') }}"><i class="bi bi-people"></i>Students</a>
+        <a href="{{ url_for('grades') }}"><i class="bi bi-graph-up"></i>Grades</a>
+        <a href="{{ url_for('attendance') }}"><i class="bi bi-calendar-check"></i>Attendance</a>
+        <a href="{{ url_for('reports') }}"><i class="bi bi-file-earmark-text"></i>Reports</a>
+        <a href="{{ url_for('ai_assistant') }}"><i class="bi bi-robot"></i>AI Assistant</a>
+        <a href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i>Logout</a>
+    </div>
+
+    <div class="main-content">
+        <div class="topnav">
+            <div>
+                <h4 class="mb-0">Dashboard Overview</h4>
+                <small class="text-muted">Welcome back, {{ session.username }}!</small>
+            </div>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger"><i class="bi bi-box-arrow-right me-2"></i>Logout</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-4">
+                <div class="stat-card primary">
+                    <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+                    <div class="stat-value">{{ stats.total_students }}</div>
+                    <div class="stat-label">Total Students</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-card success">
+                    <div class="stat-icon"><i class="bi bi-book-fill"></i></div>
+                    <div class="stat-value">{{ stats.total_subjects }}</div>
+                    <div class="stat-label">Subjects</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-card info">
+                    <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div class="stat-value">{{ stats.avg_marks }}%</div>
+                    <div class="stat-label">Average Marks</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-card warning">
+                    <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+                    <div class="stat-value">{{ stats.present_today }}</div>
+                    <div class="stat-label">Present Today</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Overview - Professional -->
+        <div class="row mb-4">
+            <div class="col-md-8 mb-4">
+                <div class="chart-container" style="padding: 30px;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h5 class="section-title mb-1"><i class="bi bi-bar-chart-fill me-2"></i>Performance Overview</h5>
+                            <small class="text-muted">Subject-wise academic performance analysis</small>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary active" onclick="updateChart('all')">All</button>
+                            <button class="btn btn-outline-primary" onclick="updateChart('top')">Top 3</button>
+                            <button class="btn btn-outline-primary" onclick="updateChart('avg')">Above Avg</button>
+                        </div>
+                    </div>
+                    <div style="height: 300px;">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-3 text-center">
+                            <h4 class="text-success fw-bold">92%</h4>
+                            <small class="text-muted">Highest Score</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h4 class="text-primary fw-bold">83%</h4>
+                            <small class="text-muted">Average</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h4 class="text-warning fw-bold">75%</h4>
+                            <small class="text-muted">Lowest Score</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h4 class="text-info fw-bold">6</h4>
+                            <small class="text-muted">Subjects</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="chart-container" style="height: calc(100% - 30px);">
+                    <h5 class="section-title mb-4"><i class="bi bi-pie-chart-fill me-2"></i>Grade Distribution</h5>
+                    <div style="height: 200px;">
+                        <canvas id="gradeChart"></canvas>
+                    </div>
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="bi bi-circle-fill text-success me-2" style="font-size: 0.6rem;"></i>A Grade (90-100%)</span>
+                            <span class="fw-bold">15%</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="bi bi-circle-fill text-info me-2" style="font-size: 0.6rem;"></i>B Grade (80-89%)</span>
+                            <span class="fw-bold">25%</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="bi bi-circle-fill text-warning me-2" style="font-size: 0.6rem;"></i>C Grade (70-79%)</span>
+                            <span class="fw-bold">30%</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="bi bi-circle-fill text-danger me-2" style="font-size: 0.6rem;"></i>Below 70%</span>
+                            <span class="fw-bold">30%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Students & Quick Actions -->
+        <div class="row">
+            <div class="col-md-8 mb-4">
+                <div class="recent-students">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="section-title mb-0"><i class="bi bi-clock-history me-2"></i>Recent Students</h5>
+                        <a href="{{ url_for('students') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead><tr><th>Student</th><th>ID</th><th>Department</th><th>Semester</th></tr></thead>
+                            <tbody>
+                                {% for student in recent_students %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle me-3">{{ student.name[0] }}</div>
+                                            <span class="fw-600">{{ student.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-primary">{{ student.student_id }}</span></td>
+                                    <td>{{ student.department or 'N/A' }}</td>
+                                    <td><span class="badge bg-info">Sem {{ student.semester or 'N/A' }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="chart-container" style="height: calc(100% - 30px);">
+                    <h5 class="section-title mb-4"><i class="bi bi-lightning-fill me-2"></i>Quick Actions</h5>
+                    <div class="d-grid gap-3">
+                        <a href="{{ url_for('add_student') }}" class="btn btn-action btn-add">
+                            <i class="bi bi-plus-circle me-2"></i>Add New Student
+                        </a>
+                        <a href="{{ url_for('grades') }}" class="btn btn-action btn-grades">
+                            <i class="bi bi-graph-up me-2"></i>Manage Grades
+                        </a>
+                        <a href="{{ url_for('attendance') }}" class="btn btn-action btn-attendance">
+                            <i class="bi bi-calendar-check me-2"></i>Mark Attendance
+                        </a>
+                        <a href="{{ url_for('reports') }}" class="btn btn-action btn-reports">
+                            <i class="bi bi-file-earmark-pdf me-2"></i>Generate Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Performance Bar Chart
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(performanceCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Math', 'Physics', 'Chemistry', 'English', 'CS', 'Biology'],
+                datasets: [{
+                    label: 'Average Marks',
+                    data: [85, 78, 82, 88, 92, 75],
+                    backgroundColor: [
+                        'rgba(102, 126, 234, 0.8)',
+                        'rgba(17, 153, 142, 0.8)',
+                        'rgba(79, 172, 254, 0.8)',
+                        'rgba(240, 147, 251, 0.8)',
+                        'rgba(255, 107, 107, 0.8)',
+                        'rgba(255, 193, 7, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(102, 126, 234, 1)',
+                        'rgba(17, 153, 142, 1)',
+                        'rgba(79, 172, 254, 1)',
+                        'rgba(240, 147, 251, 1)',
+                        'rgba(255, 107, 107, 1)',
+                        'rgba(255, 193, 7, 1)'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 10,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(102, 126, 234, 0.9)',
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        padding: 12,
+                        cornerRadius: 10,
+                        callbacks: {
+                            label: function(context) {
+                                return ' Average: ' + context.parsed.y + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+                        ticks: { font: { size: 12 }, callback: function(value) { return value + '%'; } }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { font: { size: 12, weight: '500' } }
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
+
+        // Chart update function for filter buttons
+        function updateChart(filter) {
+            const buttons = document.querySelectorAll('.btn-group .btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            let newData, newLabels;
+            if (filter === 'top') {
+                newLabels = ['CS', 'English', 'Math'];
+                newData = [92, 88, 85];
+            } else if (filter === 'avg') {
+                newLabels = ['CS', 'English', 'Math', 'Chemistry'];
+                newData = [92, 88, 85, 82];
+            } else {
+                newLabels = ['Math', 'Physics', 'Chemistry', 'English', 'CS', 'Biology'];
+                newData = [85, 78, 82, 88, 92, 75];
+            }
+
+            performanceChart.data.labels = newLabels;
+            performanceChart.data.datasets[0].data = newData;
+            performanceChart.update();
+        }
+
+        // Grade Distribution Pie Chart
+        const gradeCtx = document.getElementById('gradeChart').getContext('2d');
+        new Chart(gradeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['A (90-100%)', 'B (80-89%)', 'C (70-79%)', 'D (60-69%)', 'F (<60%)'],
+                datasets: [{
+                    data: [15, 25, 30, 20, 10],
+                    backgroundColor: [
+                        'rgba(17, 153, 142, 0.8)',
+                        'rgba(79, 172, 254, 0.8)',
+                        'rgba(255, 193, 7, 0.8)',
+                        'rgba(255, 107, 107, 0.8)',
+                        'rgba(108, 117, 125, 0.8)'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } }
+                },
+                cutout: '60%'
+            }
+        });
+    </script>
+</body>
+</html>
